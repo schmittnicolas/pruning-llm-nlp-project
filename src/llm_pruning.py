@@ -16,6 +16,28 @@ TEST_SAMPLES = [
     "List the most common data structures in computer science, such as arrays, linked lists, stacks, and queues. Describe their key characteristics, use cases, and how each data structure handles storage and retrieval of data."
 ]
 
+
+"""
+    Different Pruning Methods mentioned in the Pruning Large Language Models: A Survey” article: 
+    1. Magnitude-based pruning
+        Explain:
+
+    2. Structured Pruning
+        Structured pruning is a model compression technique that removes entire structural components, 
+        such as neurons, channels, or attention heads, from a neural network. 
+        This approach results in a more regular and dense structure, which is easier to implement 
+        and more efficient for hardware, as it doesn't require special sparse matrix operations. 
+        While structured pruning is less flexible than unstructured pruning, which removes individual weights, 
+        it offers direct reductions in computational complexity. However, it may lead to a higher impact 
+        on model accuracy. Overall, structured pruning is beneficial for simplifying models and improving 
+        inference speed without the need for complex deployment strategies.
+
+
+
+"""
+
+
+
 class LLMPruner:
     def __init__(self, model_name: str, pruning_method: str = "magnitude"):
         self.model = AutoModelForCausalLM.from_pretrained(model_name)
