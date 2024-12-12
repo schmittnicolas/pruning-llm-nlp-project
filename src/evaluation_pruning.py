@@ -184,7 +184,7 @@ def calculate_ecological_impact(memory_size, inference_time):
 #                                         GLOBAL EVALUATION                                     #
 #################################################################################################
 
-def global_evaluation(modelConfig, model, tokenizer, device=device):
+def global_evaluation(modelConfig, device=device):
     """
     Evaluate a model across multiple metrics.
     
@@ -192,17 +192,17 @@ def global_evaluation(modelConfig, model, tokenizer, device=device):
     """
     
     # Memory evaluation
-    memory_size = get_model_memory(model)
+    memory_size = get_model_memory(modelConfig.model)
     
     # Text generation
-    generated_text = generate_text(model, tokenizer, PROMPT)
+    generated_text = generate_text(modelConfig.model, modelConfig.tokenizer, PROMPT)
 
     # Perplexity evaluation
-    ppl_test = eval_perplexity(modelConfig, model, tokenizer, device)
+    ppl_test = eval_perplexity(modelConfig, modelConfig.model, modelConfig.tokenizer, device)
 
     # Inference time evaluation
-    inference_time = measure_inference_time(model, modelConfig.nsamples, 
-                                         modelConfig.seed, modelConfig.seqlen, tokenizer)
+    inference_time = measure_inference_time(modelConfig.model, modelConfig.nsamples, 
+                                         modelConfig.seed, modelConfig.seqlen, modelConfig.tokenizer)
 
     # Ecological impact evaluation
     ecological_impact = calculate_ecological_impact(memory_size, inference_time)
