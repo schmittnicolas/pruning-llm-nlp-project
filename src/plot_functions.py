@@ -19,7 +19,6 @@ def plot_metrics(metric_data, ratios, metric_name):
     # Display the plot
     plt.show()
 
-#def ecological_impact():
 
 
 
@@ -43,3 +42,24 @@ def compare_prompt(results, columns, prompt=PROMPT):
     ])
 
     return styled_data
+
+
+def compare_ecological_impact(results, columns):
+    energy_consumption_kwh = [result["ecological_impact"]['energy_consumption_kwh'] for result in results]
+    co2_emissions_kg = [result["ecological_impact"]['inference_energy_kwh'] for result in results]
+
+
+    data = pd.DataFrame({
+    'Energy Consumption (kWh)': energy_consumption_kwh,
+    'CO2 Emissions (kg)': co2_emissions_kg
+    })
+
+    # Set the index names as 'Energy Consumption' and 'CO2 Emissions'
+    data.index = ['Energy Consumption', 'CO2 Emissions']
+
+
+    data.columns = columns
+
+
+
+    return data

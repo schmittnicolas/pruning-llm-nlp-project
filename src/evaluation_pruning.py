@@ -274,9 +274,7 @@ def global_evaluation(modelConfig, trainloader, testloader, is_structured=False,
         "text_generation": {
             "generated_text": generated_text
         },
-        "perplexity": {
-            "test_ppl": ppl_test
-        },
+        "perplexity": ppl_test,
         "computational_complexity": flops_metrics,
         "inference_time": {
             "average_time": inference_time
