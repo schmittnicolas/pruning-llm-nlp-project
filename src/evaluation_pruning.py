@@ -62,10 +62,7 @@ def eval_ppl_wikitext(model, testenc, bs=1, device=None):
     return ppl.item()
 
 
-def eval_perplexity(args, model, tokenizer, device=torch.device("cuda:0")):
-    # Get the test loader
-    _, testloader = get_wikitext2(args.nsamples, args.seed, args.seqlen, tokenizer)
-
+def eval_perplexity(model, testloader, device=torch.device("cuda:0")):
     # Evaluate ppl in no grad context to avoid updating the model
     with torch.no_grad():
         ppl_test = eval_ppl_wikitext(model, testloader, 1, device)
@@ -190,6 +187,11 @@ def global_evaluation(modelConfig, device=device):
     
     Returns a structured dictionary containing all evaluation metrics.
     """
+    # Import Data
+    _, testloader = get_wikitext2(modelConfig.nsamples, modelConfig.seed, modelConfig.seqlen, modelConfig.tokenizer)
+
+    # Perplexity evaluation
+    ppl_test = eval_perplexity(modelConfig.model, testloader, device)
     
     # Memory evaluation
     memory_size = get_model_memory(modelConfig.model)
@@ -198,7 +200,6 @@ def global_evaluation(modelConfig, device=device):
     generated_text = generate_text(modelConfig.model, modelConfig.tokenizer, PROMPT)
 
     # Perplexity evaluation
-    ppl_test = eval_perplexity(modelConfig, modelConfig.model, modelConfig.tokenizer, device)
 
     # Inference time evaluation
     inference_time = measure_inference_time(modelConfig.model, modelConfig.nsamples, 
