@@ -216,14 +216,20 @@ def measure_model_flops(model, input_sample):
 #                                         GLOBAL EVALUATION                                     #
 #################################################################################################
 
-def global_evaluation(modelConfig, is_structured=False, device=device):
+def global_evaluation(modelConfig, trainloader, testloader, is_structured=False, device=device):
     """
     Evaluate a model across multiple metrics.
     
     Returns a structured dictionary containing all evaluation metrics.
     """
     # Import Data
-    trainloader, testloader = get_wikitext2(modelConfig.nsamples, modelConfig.seed, modelConfig.seqlen, modelConfig.tokenizer)
+
+    # Inference time evaluation
+    # There is no point of caculating the inference time for a unstructured model as it does not reduce the model size
+    inference_time = 0
+    if is_structured:
+        inference_time = measure_inference_time(modelConfig.model, modelConfig.nsamples, modelConfig.seed, 
+                                                modelConfig.seqlen, modelConfig.tokenizer)
 
     # Perplexity evaluation
     ppl_test = eval_perplexity(modelConfig.model, testloader, device)
@@ -234,13 +240,6 @@ def global_evaluation(modelConfig, is_structured=False, device=device):
     # Text generation
     generated_text = generate_text(modelConfig.model, modelConfig.tokenizer, PROMPT)
 
-    # Inference time evaluation
-    # There is no point of caculating the inference time for a unstructured model as it does not reduce the model size
-    inference_time = 0
-    if is_structured:
-        inference_time = measure_inference_time(modelConfig.model, modelConfig.nsamples, modelConfig.seed, 
-                                                modelConfig.seqlen, modelConfig.tokenizer)
-        
     # FLOPs evaluation
     sample_input = next(iter(trainloader))[0][0].unsqueeze(0).to(device)
     flops_metrics = measure_model_flops(modelConfig.model, sample_input)
