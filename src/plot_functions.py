@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def plot_perplexity(perplexities, ratios):
+def plot_perplexity(results, ratios):
+    perplexities = [result["perplexity"]["test_ppl"] for result in results]
+
     # Plotting
     plt.figure(figsize=(10, 6))
     plt.plot(ratios, perplexities, marker='o', linestyle='-', color='b', label='Perplexity')
