@@ -5,3 +5,4 @@ python-dotenv>=0.19.1
 accelerate>=0.26.0
 datasets
 matplotlib
+thop
