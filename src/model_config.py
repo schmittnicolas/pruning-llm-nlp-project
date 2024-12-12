@@ -68,13 +68,24 @@ class ModelConfig:
 
     def copy_model(self):
         """
-        Create a deep copy of the loaded model.
+        Create a deep copy of the ModelConfig instance with a copied model.
 
         Returns:
-            AutoModelForCausalLM: A deep copy of the loaded language model.
+            ModelConfig: A new ModelConfig instance with a deep copy of the loaded model.
         """
         if self.model is None:
             raise ValueError("Model has not been loaded yet. Call 'load_llm()' first.")
 
-        model_copy = copy.deepcopy(self.model)
-        return model_copy
+        new_config = ModelConfig(
+            model_name=self.model_name,
+            token=self.token,
+            seed=self.seed,
+            nsamples=self.nsamples,
+            seqlen=self.seqlen,
+            sparsity_ratio=self.sparsity_ratio,
+            cache_dir=self.cache_dir,
+            save=self.save,
+            save_model=self.save_model,
+        )
+        new_config.model = copy.deepcopy(self.model)
+        return new_config

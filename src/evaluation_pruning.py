@@ -74,141 +74,52 @@ def eval_perplexity(args, model, tokenizer, device=torch.device("cuda:0")):
 
     return ppl_test
 
-# def eval_perplexity(args, model, tokenizer, device=torch.device("cpu")):
-#     # Get the test loader
-#     _, testloader = get_wikitext2(args.nsamples, args.seed, args.seqlen, tokenizer)
-
-#     # Evaluate ppl in no grad context to avoid updating the model
-#     with torch.no_grad():
-#         ppl_test = eval_ppl_wikitext(model, testloader, 1, device)
-
-#     return ppl_test
-
 
 #################################################################################################
 #                                       MEMORY SIZE EVALUATION                                  #
 #################################################################################################
 
-
-def compare_model_memory(model_pruned, model_original):
-    """
-    Compare the memory usage of a pruned model and a non-pruned model.
+def get_model_memory(model):
+    """Calculate the memory usage of a model.
 
     Args:
-        model_pruned (torch.nn.Module): The pruned model.
-        model_original (torch.nn.Module): The original (non-pruned) model.
+        model (torch.nn.Module): The model to evaluate.
 
     Returns:
-        dict: A dictionary containing the memory sizes and the percentage of space saved.
+        int: Size of the model in bytes.
     """
-
-    # def get_model_size(model):
-    #     """Calculate the size of a model in bytes."""
-    #     # Create a temporary buffer to save the model
-    #     buffer = torch.save(model.state_dict(), None)
-    #     return len(buffer)
-
-    def get_model_size(model):
-        """Calculate the size of a model in bytes."""
-        # Create a temporary in-memory buffer
-        buffer = io.BytesIO()
-        torch.save(model.state_dict(), buffer)
-        size_in_bytes = buffer.tell()  # Get the size of the buffer in bytes
-        buffer.close()
-        return size_in_bytes
-
-    # Calculate memory size for both models
-    size_pruned = get_model_size(model_pruned)
-    size_original = get_model_size(model_original)
-
-    # Calculate space saved
-    space_saved = size_original - size_pruned
-    percentage_saved = (space_saved / size_original) * 100
-
-    # Return results as a dictionary
-    model_memory = {
-        "Pruned Model Size (bytes)": size_pruned,
-        "Original Model Size (bytes)": size_original,
-        "Space Saved (bytes)": space_saved,
-        "Percentage Saved (%)": percentage_saved,
-    }
-
-    print("Model Memory Difference: ", model_memory)
-
-    return model_memory
-
-
-#################################################################################################
-#                                    ECOLOGICAL IMPACT EVALUATION                               #
-#################################################################################################
-
-
-POWER_CONSUMPTION_INFERENCE = 200  # watts (example: power consumption per inference)
-POWER_PER_MEMORY_UNIT = 0.01  # watts per MB (example: power for storing model weights)
-CARBON_INTENSITY = 0.233  # kg CO2 per kWh (average for many regions)
-
-
-def calculate_energy_savings_memory(memory_saved_mb):
-    energy_saved = POWER_PER_MEMORY_UNIT * memory_saved_mb
-    energy_saved_kWh = energy_saved / 1000
-    return energy_saved_kWh
-
-
-# Function to calculate energy savings from reduced computation (for sparse pruning)
-def calculate_energy_savings_computation(inference_time_saved, num_inferences):
-    energy_saved = (
-        POWER_CONSUMPTION_INFERENCE * inference_time_saved * num_inferences
-    )  # in watt-seconds (Joules)
-    energy_saved_kWh = energy_saved / 3600000  # convert Joules to kWh
-    return energy_saved_kWh
-
-
-# Function to calculate carbon footprint reduction
-def calculate_carbon_footprint_reduction(energy_saved_kWh):
-    carbon_saved = energy_saved_kWh * CARBON_INTENSITY  # in kg CO₂
-    return carbon_saved
+    buffer = io.BytesIO()
+    torch.save(model.state_dict(), buffer)
+    size_in_bytes = buffer.tell()
+    buffer.close()
+    return size_in_bytes
 
 
 #################################################################################################
 #                                       INFERENCE TIME EVALUATION                               #
 #################################################################################################
 
-
-def compare_inference_time(
-    original_model, pruned_model, nsamples, seed, seqlen, tokenizer
-):
+def measure_inference_time(model, nsamples, seed, seqlen, tokenizer):
     # Get data samples
     trainloader, testenc = get_wikitext2(nsamples, seed, seqlen, tokenizer)
+    device = next(model.parameters()).device
 
-
-    # Measure inference time for the original model
+    # Measure inference time
     start_time = time.time()
     for inp, tar in trainloader:
-        original_model(inp)
-    inference_time_original = (time.time() - start_time) / nsamples
+        inp = inp.to(device)
+        model(inp)
+    inference_time = (time.time() - start_time) / nsamples
 
-    # Measure inference time for the pruned model
-    start_time = time.time()
-    for inp, tar in trainloader:
-        pruned_model(inp)
-    inference_time_pruned = (time.time() - start_time) / nsamples
-
-    # Compare the average inference times
-    print(
-        f"Average Inference Time for Original Model: {inference_time_original:.4f} seconds"
-    )
-    print(
-        f"Average Inference Time for Pruned Model: {inference_time_pruned:.4f} seconds"
-    )
-
-    return inference_time_original, inference_time_pruned
+    print(f"Average Inference Time: {inference_time:.4f} seconds")
+    return inference_time
 
 
 #################################################################################################
 #                                      PROMPT ANSWER EVALUATION                                 #
 #################################################################################################
 
-def generate_text(model, tokenizer, prompt, max_length=50):
+def generate_text(model, tokenizer, prompt, max_length=100):
     """
     Generate text using the pruned model
     
@@ -233,47 +144,41 @@ PROMPT = """
     The book is said to contain powerful secrets, but it is written in a language no one can understand…
     """
 
-def compare_models_for_prompt(original_model, pruned_model, prompt=PROMPT):
-    # Generate output from the original model
-    # original_output = original_model(prompt, max_length=100, num_return_sequences=1)[0][
-    #     "generated_text"
-    # ]
-
-    # # Generate output from the pruned model
-    # pruned_output = pruned_model(prompt, max_length=100, num_return_sequences=1)[0][
-    #     "generated_text"
-    # ]
-
-    original_output = generate_text(original_model, original_model.tokenizer, prompt)
-    pruned_output = generate_text(pruned_model, pruned_model.tokenizer, prompt)
-
-    # Display the results
-    print(f"Output from Original Model:\n{original_output}\n")
-    print(f"Output from Pruned Model:\n{pruned_output}\n")
-
-    return original_output, pruned_output
-
-
 #################################################################################################
 #                                         GLOBAL EVALUATION                                     #
 #################################################################################################
 
+def global_evaluation(modelConfig, device=device):
+    """
+    Evaluate a model across multiple metrics.
+    
+    Returns a structured dictionary containing all evaluation metrics.
+    """
+    
+    # Memory evaluation
+    memory_size = get_model_memory(modelConfig.model)
+    
+    # Text generation
+    generated_text = generate_text(modelConfig.model, modelConfig.tokenizer, PROMPT)
 
-def global_evaluation(modelConfig, original_model, pruned_model, tokenizer, device=device):
+    # Perplexity evaluation
+    ppl_test = eval_perplexity(modelConfig, modelConfig.model, modelConfig.tokenizer, device)
 
-    original_model_perplexity = eval_perplexity(modelConfig, original_model, tokenizer, device=device)
-    pruned_model_perplexity = eval_perplexity(modelConfig, pruned_model, tokenizer, device=device)
+    # Compile all metrics
+    evaluation_results = {
+        "memory": {
+            "model_size_bytes": memory_size,
+        },
+        "text_generation": {
+            "generated_text": generated_text
+        },
+        "perplexity": {
+            "test_ppl": ppl_test
+        },
+        "metadata": {
+            "evaluation_timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "device": str(device)
+        }
+    }
 
-    print("Original Model Perplexity: ", original_model_perplexity)
-    print("Pruned Model Perplexity: ", pruned_model_perplexity)
-
-    # compare_model_memory(original_model, pruned_model)
-    # compare_inference_time(
-    #     original_model,
-    #     pruned_model,
-    #     modelConfig.nsamples,
-    #     modelConfig.seed,
-    #     modelConfig.seqlen,
-    #     tokenizer,
-    # )
-    compare_models_for_prompt(original_model, pruned_model)
+    return evaluation_results
