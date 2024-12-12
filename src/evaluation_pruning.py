@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+from thop import profile
 from data_loading import get_wikitext2
 from tqdm import tqdm
 import time
@@ -178,6 +179,40 @@ def calculate_ecological_impact(memory_size, inference_time):
     }
 
 #################################################################################################
+#                                       FLOPS EVALUATION                                        #
+#################################################################################################
+
+def measure_model_flops(model, input_sample):
+    """
+    Measure the number of FLOPs for the model.
+    
+    Args:
+        model (torch.nn.Module): The model to evaluate
+        input_sample (torch.Tensor): A sample input to the model
+    
+    Returns:
+        dict: FLOPs and related computational complexity metrics
+    """
+    # Ensure the model is in evaluation mode
+    model.eval()
+    
+    try:
+        # Use thop's profile to calculate FLOPs
+        macs, params = profile(model, inputs=(input_sample,), verbose=False)
+        
+        return {
+            "total_flops": macs * 2,  # MACs are multiplications, so multiply by 2 to get FLOPs
+            "total_params": params,
+            "computational_complexity": {
+                "gflops": (macs * 2) / 1e9,
+                "millions_of_flops": (macs * 2) / 1e6
+            }
+        }
+    except Exception as e:
+        print(f"Error measuring FLOPs: {e}")
+        return None
+
+#################################################################################################
 #                                         GLOBAL EVALUATION                                     #
 #################################################################################################
 
@@ -188,7 +223,7 @@ def global_evaluation(modelConfig, is_structured=False, device=device):
     Returns a structured dictionary containing all evaluation metrics.
     """
     # Import Data
-    _, testloader = get_wikitext2(modelConfig.nsamples, modelConfig.seed, modelConfig.seqlen, modelConfig.tokenizer)
+    trainloader, testloader = get_wikitext2(modelConfig.nsamples, modelConfig.seed, modelConfig.seqlen, modelConfig.tokenizer)
 
     # Perplexity evaluation
     ppl_test = eval_perplexity(modelConfig.model, testloader, device)
@@ -205,6 +240,10 @@ def global_evaluation(modelConfig, is_structured=False, device=device):
     if is_structured:
         inference_time = measure_inference_time(modelConfig.model, modelConfig.nsamples, modelConfig.seed, 
                                                 modelConfig.seqlen, modelConfig.tokenizer)
+        
+    # FLOPs evaluation
+    sample_input = next(iter(trainloader))[0][0].unsqueeze(0).to(device)
+    flops_metrics = measure_model_flops(modelConfig.model, sample_input)
 
     # Ecological impact evaluation
     ecological_impact = calculate_ecological_impact(memory_size, inference_time)
@@ -220,6 +259,7 @@ def global_evaluation(modelConfig, is_structured=False, device=device):
         "perplexity": {
             "test_ppl": ppl_test
         },
+        "computational_complexity": flops_metrics,
         "inference_time": {
             "average_time": inference_time
         },
