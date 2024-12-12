@@ -143,10 +143,48 @@ PROMPT = """
     """
 
 #################################################################################################
+#                                    ECOLOGICAL IMPACT EVALUATION                               #
+#################################################################################################
+
+def calculate_ecological_impact(memory_size, inference_time):
+    """
+    Calculate ecological impact based on model size and inference time.
+    Uses simplified metrics for demonstration.
+    
+    Args:
+        memory_size (int): Size of the model in bytes
+        inference_time (float): Average inference time in seconds
+    
+    Returns:
+        dict: Dictionary containing ecological impact metrics
+    """
+    # Constants for ecological impact calculation (simplified example metrics)
+    ENERGY_PER_BYTE = 1e-9  # Energy consumption per byte of model size (kWh)
+    ENERGY_PER_SECOND = 1e-4  # Energy consumption per second of inference (kWh)
+    CO2_PER_KWH = 0.233  # Average CO2 emissions per kWh (kg)
+
+    # Calculate energy consumption
+    size_energy = (memory_size * ENERGY_PER_BYTE)  # kWh
+    inference_energy = (inference_time * ENERGY_PER_SECOND)  # kWh
+    total_energy = size_energy + inference_energy
+
+    # Calculate CO2 emissions
+    co2_emissions = total_energy * CO2_PER_KWH  # kg
+
+    return {
+        "energy_consumption_kwh": total_energy,
+        "co2_emissions_kg": co2_emissions,
+        "details": {
+            "size_energy_kwh": size_energy,
+            "inference_energy_kwh": inference_energy
+        }
+    }
+
+#################################################################################################
 #                                         GLOBAL EVALUATION                                     #
 #################################################################################################
 
-def global_evaluation(modelConfig, device=device):
+def global_evaluation(modelConfig, model, tokenizer, device=device):
     """
     Evaluate a model across multiple metrics.
     
@@ -154,13 +192,20 @@ def global_evaluation(modelConfig, device=device):
     """
     
     # Memory evaluation
-    memory_size = get_model_memory(modelConfig.model)
+    memory_size = get_model_memory(model)
     
     # Text generation
-    generated_text = generate_text(modelConfig.model, modelConfig.tokenizer, PROMPT)
+    generated_text = generate_text(model, tokenizer, PROMPT)
 
     # Perplexity evaluation
-    ppl_test = eval_perplexity(modelConfig, modelConfig.model, modelConfig.tokenizer, device)
+    ppl_test = eval_perplexity(modelConfig, model, tokenizer, device)
+
+    # Inference time evaluation
+    inference_time = measure_inference_time(model, modelConfig.nsamples, 
+                                         modelConfig.seed, modelConfig.seqlen, tokenizer)
+
+    # Ecological impact evaluation
+    ecological_impact = calculate_ecological_impact(memory_size, inference_time)
 
     # Compile all metrics
     evaluation_results = {
@@ -173,6 +218,10 @@ def global_evaluation(modelConfig, device=device):
         "perplexity": {
             "test_ppl": ppl_test
         },
+        "inference_time": {
+            "average_time": inference_time
+        },
+        "ecological_impact": ecological_impact,
         "metadata": {
             "evaluation_timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "device": str(device)

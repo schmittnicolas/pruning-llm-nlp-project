@@ -16,7 +16,7 @@ class ModelConfig:
         nsamples: int = 128,
         seqlen: int = 128,
         sparsity_ratio: float = 0.5,
-        cache_dir: str = ".cache/llm_weights/",
+        cache_dir: str = ".my_cache/llm_weights/",
         save: str = "out/opt_350m/2-4/wanda/",
         save_model: str = None,
     ):
