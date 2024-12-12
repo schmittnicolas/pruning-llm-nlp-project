@@ -208,22 +208,44 @@ def compare_inference_time(
 #                                      PROMPT ANSWER EVALUATION                                 #
 #################################################################################################
 
+def generate_text(model, tokenizer, prompt, max_length=50):
+    """
+    Generate text using the pruned model
+    
+    Args:
+        model (OPTForCausalLM): Pruned OPT model
+        tokenizer (OPTTokenizer): Tokenizer
+        prompt (str): Input text prompt
+        max_length (int): Maximum length of generated text
+    
+    Returns:
+        str: Generated text
+    """
+
+    input_ids = tokenizer.encode(prompt, return_tensors="pt").to(model.device)
+    output = model.generate(input_ids, max_length=max_length, num_return_sequences=1, no_repeat_ngram_size=2)
+    generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
+
+    return generated_text
+
 PROMPT = """
     A young girl named Lila discovers an ancient book in the attic of her family home. 
     The book is said to contain powerful secrets, but it is written in a language no one can understand…
     """
 
-
 def compare_models_for_prompt(original_model, pruned_model, prompt=PROMPT):
     # Generate output from the original model
-    original_output = original_model(prompt, max_length=100, num_return_sequences=1)[0][
-        "generated_text"
-    ]
+    # original_output = original_model(prompt, max_length=100, num_return_sequences=1)[0][
+    #     "generated_text"
+    # ]
 
-    # Generate output from the pruned model
-    pruned_output = pruned_model(prompt, max_length=100, num_return_sequences=1)[0][
-        "generated_text"
-    ]
+    # # Generate output from the pruned model
+    # pruned_output = pruned_model(prompt, max_length=100, num_return_sequences=1)[0][
+    #     "generated_text"
+    # ]
+
+    original_output = generate_text(original_model, original_model.tokenizer, prompt)
+    pruned_output = generate_text(pruned_model, pruned_model.tokenizer, prompt)
 
     # Display the results
     print(f"Output from Original Model:\n{original_output}\n")
@@ -245,7 +267,7 @@ def global_evaluation(modelConfig, original_model, pruned_model, tokenizer, devi
     print("Original Model Perplexity: ", original_model_perplexity)
     print("Pruned Model Perplexity: ", pruned_model_perplexity)
 
-    compare_model_memory(original_model, pruned_model)
+    # compare_model_memory(original_model, pruned_model)
     # compare_inference_time(
     #     original_model,
     #     pruned_model,
