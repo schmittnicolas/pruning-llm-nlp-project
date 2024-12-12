@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def plot_perplexity(perplexities, ratios):
     # Plotting
@@ -15,3 +16,25 @@ def plot_perplexity(perplexities, ratios):
 
     # Display the plot
     plt.show()
+
+PROMPT = """
+    A young girl named Lila discovers an ancient book in the attic of her family home. 
+    The book is said to contain powerful secrets, but it is written in a language no one can understand…
+    """
+
+def compare_prompt(results, columns, prompt=PROMPT):
+    text_generation = [result["text_generation"]['generated_text'].replace(prompt, '').replace('\n', '') for result in results]
+
+    data = pd.DataFrame([text_generation], index=[0])
+    data.columns = columns
+
+    pd.set_option('display.max_colwidth', None)
+
+    styled_data = data.style.set_properties(**{
+        'text-align': 'center',
+        'vertical-align': 'middle'
+    }).set_table_styles([
+        {"selector": "th", "props": [("text-align", "center")]}
+    ])
+
+    return styled_data

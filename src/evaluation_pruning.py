@@ -181,7 +181,7 @@ def calculate_ecological_impact(memory_size, inference_time):
 #                                         GLOBAL EVALUATION                                     #
 #################################################################################################
 
-def global_evaluation(modelConfig, device=device):
+def global_evaluation(modelConfig, is_structured=False, device=device):
     """
     Evaluate a model across multiple metrics.
     
@@ -199,11 +199,12 @@ def global_evaluation(modelConfig, device=device):
     # Text generation
     generated_text = generate_text(modelConfig.model, modelConfig.tokenizer, PROMPT)
 
-    # Perplexity evaluation
-
     # Inference time evaluation
-    inference_time = measure_inference_time(modelConfig.model, modelConfig.nsamples, 
-                                         modelConfig.seed, modelConfig.seqlen, modelConfig.tokenizer)
+    # There is no point of caculating the inference time for a unstructured model as it does not reduce the model size
+    inference_time = 0
+    if is_structured:
+        inference_time = measure_inference_time(modelConfig.model, modelConfig.nsamples, modelConfig.seed, 
+                                                modelConfig.seqlen, modelConfig.tokenizer)
 
     # Ecological impact evaluation
     ecological_impact = calculate_ecological_impact(memory_size, inference_time)
