@@ -193,10 +193,8 @@ def calculate_ecological_impact(memory_size, inference_time):
     return {
         "energy_consumption_kwh": total_energy,
         "co2_emissions_kg": co2_emissions,
-        "details": {
-            "size_energy_kwh": size_energy,
-            "inference_energy_kwh": inference_energy
-        }
+        "size_energy_kwh": size_energy,
+        "inference_energy_kwh": inference_energy
     }
 
 #################################################################################################

@@ -1,17 +1,17 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
-def plot_perplexity(results, ratios):
-    perplexities = [result["perplexity"]["test_ppl"] for result in results]
 
+
+def plot_metrics(metric_data, ratios, metric_name):
     # Plotting
     plt.figure(figsize=(10, 6))
-    plt.plot(ratios, perplexities, marker='o', linestyle='-', color='b', label='Perplexity')
+    plt.plot(ratios, metric_data, marker='o', linestyle='-', color='b', label=metric_name)
 
     # Adding labels and title
     plt.xlabel("Pruning Ratio (%)", fontsize=14)
-    plt.ylabel("Perplexity", fontsize=14)
-    plt.title("Perplexity vs. Pruning Ratio", fontsize=16)
+    plt.ylabel(metric_name, fontsize=14)
+    plt.title(f"{metric_name} vs. Pruning Ratio", fontsize=16)
     plt.grid(True, linestyle='--', alpha=0.6)
     plt.legend(fontsize=12)
     plt.tight_layout()
@@ -19,8 +19,11 @@ def plot_perplexity(results, ratios):
     # Display the plot
     plt.show()
 
-PROMPT = """
-    A young girl named Lila discovers an ancient book in the attic of her family home. 
+#def ecological_impact():
+
+
+
+PROMPT = """A young girl named Lila discovers an ancient book in the attic of her family home. 
     The book is said to contain powerful secrets, but it is written in a language no one can understand…
     """
 
