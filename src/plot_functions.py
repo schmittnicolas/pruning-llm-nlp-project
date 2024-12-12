@@ -45,8 +45,8 @@ def compare_prompt(results, columns, prompt=PROMPT):
 
 
 def compare_ecological_impact(results, columns):
-    energy_consumption_kwh = [result["ecological_impact"]['energy_consumption_kwh'] for result in results]
-    co2_emissions_kg = [result["ecological_impact"]['inference_energy_kwh'] for result in results]
+    energy_consumption_kwh = [result["ecological_impact"]['energy_consumption_joules'] for result in results]
+    co2_emissions_kg = [result["ecological_impact"]['co2_emissions_grams'] for result in results]
 
 
     data = pd.DataFrame({

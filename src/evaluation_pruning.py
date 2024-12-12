@@ -97,8 +97,8 @@ def eval_perplexity(model, testloader, device=torch.device("cuda:0")):
 #                                       MEMORY SIZE EVALUATION                                  #
 #################################################################################################
 
-def get_model_size(model):
-    tmp_model_path = "temp_model.pth"
+def get_model_size(model, ratio):
+    tmp_model_path = f"temp_model{ratio}.pth"
     # Sauvegarder le modèle avec les poids à zéro
     torch.save(model.state_dict(), tmp_model_path)
     
@@ -232,7 +232,7 @@ def measure_model_flops(model, input_sample):
 #                                         GLOBAL EVALUATION                                     #
 #################################################################################################
 
-def global_evaluation(modelConfig, trainloader, testloader, is_structured=False, device=device):
+def global_evaluation(modelConfig, ratio, trainloader, testloader, is_structured=False,  device=device):
     """
     Evaluate a model across multiple metrics.
     
@@ -251,7 +251,7 @@ def global_evaluation(modelConfig, trainloader, testloader, is_structured=False,
     ppl_test = eval_perplexity(modelConfig.model, testloader, device)
     
     # Memory evaluation
-    model_size_in_Mo = get_model_size(modelConfig.model)
+    model_size_in_Mo = get_model_size(modelConfig.model, ratio)
     
     # Text generation
     generated_text = generate_text(modelConfig.model, modelConfig.tokenizer, PROMPT)
