@@ -97,18 +97,14 @@ def eval_perplexity(model, testloader, device=torch.device("cuda:0")):
 #                                       MEMORY SIZE EVALUATION                                  #
 #################################################################################################
 
-def get_model_size(model, ratio):
-    tmp_model_path = f"temp_model{ratio}.pth"
-    # Sauvegarder le modèle avec les poids à zéro
-    torch.save(model.state_dict(), tmp_model_path)
-    
-    # Obtenir la taille du fichier
-    model_size = os.path.getsize(tmp_model_path) / (1024 * 1024)  # Taille en Mo
-    
-    # Supprimer le fichier temporaire
-    os.remove(tmp_model_path)
-    
-    return model_size
+def get_memory_usage(model, ratio):
+    non_zero_params = sum((p != 0).sum().item() for p in model.parameters())
+
+    memory_usage = non_zero_params * 4  # memory in bytes
+
+    memory_usage_MB = memory_usage / (1024 * 1024)
+
+    return memory_usage_MB
 
 
 #################################################################################################
@@ -251,7 +247,7 @@ def global_evaluation(modelConfig, ratio, trainloader, testloader, is_structured
     ppl_test = eval_perplexity(modelConfig.model, testloader, device)
     
     # Memory evaluation
-    model_size_in_Mo = get_model_size(modelConfig.model, ratio)
+    model_size_in_Mo = get_memory_usage(modelConfig.model, ratio)
     
     # Text generation
     generated_text = generate_text(modelConfig.model, modelConfig.tokenizer, PROMPT)
