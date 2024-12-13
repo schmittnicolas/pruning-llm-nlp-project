@@ -22,16 +22,19 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 #################################################################################################
 
 def count_parameters(model):
-    total_nonzero_params = 0
-    trainable_nonzero_params = 0
+    total_params = 0
+    zero_params = 0
     
-    for param in model.parameters():
-        num_nonzero_params = torch.count_nonzero(param).item()  # Count non-zero elements
-        total_nonzero_params += num_nonzero_params
-        if param.requires_grad:
-            trainable_nonzero_params += num_nonzero_params
-    
-    return total_nonzero_params, trainable_nonzero_params
+    for name, param in model.named_parameters():
+        if 'weight' in name:  # Only count weights, not biases
+            params = param.numel()
+            zeros = (param == 0).sum().item()
+            total_params += params
+            zero_params += zeros
+
+    return {"zero_params": zero_params, "total_params": total_params}
+
+
 
 
 
