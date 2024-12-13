@@ -3,27 +3,27 @@ import torch.nn as nn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def compute_neuron_pair_importance_product(gate_weight, up_weight):
 
-def compute_neuron_pair_importance(gate_weight, up_weight):
-    """
-    compute neuron pair importance scores (Maximum Absolute Weight)
-
-    Args:
-    - gate_weight: Weight matrix from the gate_proj layer.
-    - up_weight: Weight matrix from the up_weight layer.
-
-    Returns:
-    - importance_scores: Importance scores for each neuron pair.
-    """
-
-    gate_max_abs = torch.max(gate_weight, dim=1).values + torch.abs(
-        torch.min(gate_weight, dim=1).values
-    )
-    up_max_abs = torch.max(up_weight, dim=1).values + torch.abs(
-        torch.min(up_weight, dim=1).values
-    )
-    importance_scores = gate_max_abs + up_max_abs
+    gate_norms = torch.norm(gate_weight, p=1, dim=1)
+    up_norms = torch.norm(up_weight, p=1, dim=1)
+    importance_scores = gate_norms * up_norms
     return importance_scores
+
+
+def compute_neuron_pair_importance_variance(gate_weight, up_weight):
+    gate_variance = torch.var(gate_weight, dim=1)
+    up_variance = torch.var(up_weight, dim=1)
+    importance_scores = gate_variance + up_variance
+    return importance_scores
+
+
+def compute_neuron_pair_importance_absolute(gate_weight, up_weight):
+  gate_max_abs = torch.max(gate_weight, dim=1).values + torch.abs(torch.min(gate_weight, dim=1).values)
+  up_max_abs = torch.max(up_weight, dim=1).values + torch.abs(torch.min(up_weight, dim=1).values)
+  importance_scores = gate_max_abs + up_max_abs
+  return importance_scores
+
 
 
 def prune_neuron_pairs(mlp, prune_percent):
@@ -48,7 +48,7 @@ def prune_neuron_pairs(mlp, prune_percent):
 
     # Compute importance stores. Neurons with higher importance scores
     # are considered more important and less likely to be pruned.
-    importance_scores = compute_neuron_pair_importance(gate_weight, up_weight)
+    importance_scores = compute_neuron_pair_importance_absolute(gate_weight, up_weight)
 
     # Store the original number of neurons in the intermediate layer.
     original_intermediate_size = gate_weight.size(0)
