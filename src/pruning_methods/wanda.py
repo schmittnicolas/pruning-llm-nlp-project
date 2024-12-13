@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import random
 from datasets import load_dataset
+from tqdm import tqdm
 
 from data_loading import get_c4
 
@@ -94,19 +95,19 @@ def prepare_calibration_input(model, dataloader, device):
 
 
 # wanda_pruning(modelConfig, model, modelConfig.tokenizer)
-def wanda_pruning(modelConfig, device=torch.device("cuda:0")):
+def wanda_pruning(modelConfig, dataloader, device=torch.device("cuda:0")):
     model = modelConfig.model
     tokenizer = modelConfig.tokenizer
     use_cache = model.config.use_cache
     model.config.use_cache = False
 
     print("Loading calibration data")
-    dataloader, _ = get_c4(
-        nsamples=modelConfig.nsamples,
-        seed=modelConfig.seed,
-        seqlen=model.seqlen,
-        tokenizer=tokenizer,
-    )
+    #dataloader, _ = get_c4(
+    #    nsamples=modelConfig.nsamples,
+    #    seed=modelConfig.seed,
+    #    seqlen=model.seqlen,
+    #    tokenizer=tokenizer,
+    #)
 
     with torch.no_grad():
         inps, outs, attention_mask = prepare_calibration_input(
