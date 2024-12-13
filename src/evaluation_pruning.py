@@ -166,7 +166,7 @@ def measure_inference_time(model, nsamples, seed, seqlen, tokenizer):
 #                                      PROMPT ANSWER EVALUATION                                 #
 #################################################################################################
 
-def generate_text(model, tokenizer, prompt, max_length=100):
+def generate_text(model, tokenizer, prompt, max_length=50):
     """
     Generate text using the pruned model
     

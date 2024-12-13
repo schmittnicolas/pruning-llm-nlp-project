@@ -38,7 +38,7 @@ def get_c4(nsamples, seed, seqlen, tokenizer):
     return trainloader, valenc
 
 
-def get_wikitext2(nsamples, seed, seqlen, tokenizer):
+def get_wikitext2_unstructured(nsamples, seed, seqlen, tokenizer):
     # Load train and test datasets
     traindata = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")
     testdata = load_dataset("wikitext", "wikitext-2-raw-v1", split="test")
