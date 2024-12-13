@@ -1,5 +1,7 @@
 from datasets import load_dataset
 import random
+import torch
+from torch.utils.data import Dataset
 
 
 def get_c4(nsamples, seed, seqlen, tokenizer):
@@ -56,3 +58,40 @@ def get_wikitext2(nsamples, seed, seqlen, tokenizer):
         tar[:, :-1] = -100
         trainloader.append((inp, tar))
     return trainloader, testenc
+
+
+def get_wikitext2(seq_len, tokenizer):
+    traindata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='train')
+    testdata = load_dataset('wikitext', 'wikitext-2-raw-v1', split='test')
+    return traindata, testdata
+
+
+class IndexDataset(Dataset):
+    def __init__(self, tensors):
+        self.tensors = tensors
+
+    def __getitem__(self, index):
+        return self.tensors[index]
+
+    def __len__(self):
+        return len(self.tensors)
+
+def process_data(samples, tokenizer, seq_len, field_name):
+    test_ids = tokenizer("\n\n".join(samples[field_name]), return_tensors='pt').input_ids[0]
+    test_ids_batch = []
+    nsamples = test_ids.numel() // seq_len
+
+    for i in range(nsamples):
+        batch = test_ids[(i * seq_len):((i + 1) * seq_len)]
+        test_ids_batch.append(batch)
+    test_ids_batch = torch.stack(test_ids_batch)
+    return IndexDataset(tensors=test_ids_batch)
+       
+
+def get_loaders(name, tokenizer, seq_len=2048, batch_size = 8):
+    if 'wikitext2' in name:
+        train_data, test_data = get_wikitext2(seq_len, tokenizer)
+        test_dataset = process_data(test_data, tokenizer, seq_len, 'text')
+
+    test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    return train_data, test_loader
