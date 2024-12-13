@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 
@@ -9,6 +10,27 @@ import time
 import io
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+
+#################################################################################################
+#                                               UTILS                                           #
+#################################################################################################
+
+def count_parameters(model):
+    total_nonzero_params = 0
+    trainable_nonzero_params = 0
+    
+    for param in model.parameters():
+        num_nonzero_params = torch.count_nonzero(param).item()  # Count non-zero elements
+        total_nonzero_params += num_nonzero_params
+        if param.requires_grad:
+            trainable_nonzero_params += num_nonzero_params
+    
+    return total_nonzero_params, trainable_nonzero_params
+
+
+
 
 #################################################################################################
 #                                        PERPLEXITY EVALUATION                                  #
@@ -75,20 +97,14 @@ def eval_perplexity(model, testloader, device=torch.device("cuda:0")):
 #                                       MEMORY SIZE EVALUATION                                  #
 #################################################################################################
 
-def get_model_memory(model):
-    """Calculate the memory usage of a model.
+def get_memory_usage(model, ratio):
+    non_zero_params = sum((p != 0).sum().item() for p in model.parameters())
 
-    Args:
-        model (torch.nn.Module): The model to evaluate.
+    memory_usage = non_zero_params * 4  # memory in bytes
 
-    Returns:
-        int: Size of the model in bytes.
-    """
-    buffer = io.BytesIO()
-    torch.save(model.state_dict(), buffer)
-    size_in_bytes = buffer.tell()
-    buffer.close()
-    return size_in_bytes
+    memory_usage_MB = memory_usage / (1024 * 1024)
+
+    return memory_usage_MB
 
 
 #################################################################################################
@@ -144,39 +160,35 @@ PROMPT = """
 #                                    ECOLOGICAL IMPACT EVALUATION                               #
 #################################################################################################
 
-def calculate_ecological_impact(memory_size, inference_time):
-    """
-    Calculate ecological impact based on model size and inference time.
-    Uses simplified metrics for demonstration.
-    
-    Args:
-        memory_size (int): Size of the model in bytes
-        inference_time (float): Average inference time in seconds
-    
-    Returns:
-        dict: Dictionary containing ecological impact metrics
-    """
+def calculate_ecological_impact(model_size_in_Mo, inference_time):
     # Constants for ecological impact calculation (simplified example metrics)
-    ENERGY_PER_BYTE = 1e-9  # Energy consumption per byte of model size (kWh)
-    ENERGY_PER_SECOND = 1e-4  # Energy consumption per second of inference (kWh)
-    CO2_PER_KWH = 0.233  # Average CO2 emissions per kWh (kg)
+    ENERGY_PER_BYTE = 1e-6  # Energy consumption per byte of model size (Joules)
+    ENERGY_PER_SECOND = 0.1  # Energy consumption per second of inference (Joules)
+    CO2_PER_JOULE = 0.000233  # Average CO2 emissions per joule (grams)
 
-    # Calculate energy consumption
-    size_energy = (memory_size * ENERGY_PER_BYTE)  # kWh
-    inference_energy = (inference_time * ENERGY_PER_SECOND)  # kWh
+    # Convert model size from MB to bytes (1 MB = 1e6 bytes)
+    model_size_in_bytes = model_size_in_Mo * 1e6
+
+    # Calculate energy consumption for the model size (size in bytes * energy per byte)
+    size_energy = model_size_in_bytes * ENERGY_PER_BYTE  # Energy consumption in Joules
+
+    # Calculate energy consumption for inference time
+    inference_energy = inference_time * ENERGY_PER_SECOND  # Energy consumption in Joules
+
+    # Total energy consumption
     total_energy = size_energy + inference_energy
 
-    # Calculate CO2 emissions
-    co2_emissions = total_energy * CO2_PER_KWH  # kg
+    # Calculate CO2 emissions (CO2 per joule of energy consumed)
+    co2_emissions = total_energy * CO2_PER_JOULE  # CO2 emissions in grams
 
+    # Return the ecological impact metrics
     return {
-        "energy_consumption_kwh": total_energy,
-        "co2_emissions_kg": co2_emissions,
-        "details": {
-            "size_energy_kwh": size_energy,
-            "inference_energy_kwh": inference_energy
-        }
+        "energy_consumption_joules": total_energy,
+        "co2_emissions_grams": co2_emissions,
+        "size_energy_joules": size_energy,
+        "inference_energy_joules": inference_energy
     }
+
 
 #################################################################################################
 #                                       FLOPS EVALUATION                                        #
@@ -216,7 +228,7 @@ def measure_model_flops(model, input_sample):
 #                                         GLOBAL EVALUATION                                     #
 #################################################################################################
 
-def global_evaluation(modelConfig, trainloader, testloader, is_structured=False, device=device):
+def global_evaluation(modelConfig, ratio, trainloader, testloader, is_structured=False,  device=device):
     """
     Evaluate a model across multiple metrics.
     
@@ -235,7 +247,7 @@ def global_evaluation(modelConfig, trainloader, testloader, is_structured=False,
     ppl_test = eval_perplexity(modelConfig.model, testloader, device)
     
     # Memory evaluation
-    memory_size = get_model_memory(modelConfig.model)
+    model_size_in_Mo = get_memory_usage(modelConfig.model, ratio)
     
     # Text generation
     generated_text = generate_text(modelConfig.model, modelConfig.tokenizer, PROMPT)
@@ -245,19 +257,15 @@ def global_evaluation(modelConfig, trainloader, testloader, is_structured=False,
     flops_metrics = measure_model_flops(modelConfig.model, sample_input)
 
     # Ecological impact evaluation
-    ecological_impact = calculate_ecological_impact(memory_size, inference_time)
+    ecological_impact = calculate_ecological_impact(model_size_in_Mo, inference_time)
 
     # Compile all metrics
     evaluation_results = {
-        "memory": {
-            "model_size_bytes": memory_size,
-        },
+        "model_size": model_size_in_Mo,
         "text_generation": {
             "generated_text": generated_text
         },
-        "perplexity": {
-            "test_ppl": ppl_test
-        },
+        "perplexity": ppl_test,
         "computational_complexity": flops_metrics,
         "inference_time": {
             "average_time": inference_time
