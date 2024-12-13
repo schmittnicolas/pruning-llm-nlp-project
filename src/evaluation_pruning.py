@@ -410,7 +410,7 @@ def global_evaluation(
 
     # FLOPs evaluation
     sample_input = next(iter(trainloader))[0][0].unsqueeze(0).to(device)
-    flops_metrics = measure_model_flops(modelConfig.model, sample_input)
+    flops_metrics = 0 #measure_model_flops(modelConfig.model, sample_input)
 
     # Ecological impact evaluation
     ecological_impact = calculate_ecological_impact(model_size_in_Mo, inference_time)

@@ -59,8 +59,8 @@ def compare_ecological_impact(results, columns):
 
     data = pd.DataFrame(
         {
-            "Energy Consumption (kWh)": energy_consumption_kwh,
-            "CO2 Emissions (kg)": co2_emissions_kg,
+            "Energy Consumption (J)": energy_consumption_kwh,
+            "CO2 Emissions (g)": co2_emissions_kg,
         }
     )
 
