@@ -75,8 +75,6 @@ class LLMPruner:
                 total_params += weights.numel()
                 pruned_params += (~mask).sum().item()
 
-                if total_params < pruned_params:
-                    print("Checking")
 
         return {
             "total_parameters": total_params,

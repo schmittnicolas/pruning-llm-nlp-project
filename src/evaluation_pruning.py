@@ -218,7 +218,6 @@ def evaluate_model_perplexity(
             )
             ppl = llama_eval(model, test_loader, device)
             metric[dataset] = ppl
-            print(f"Perplexity for {dataset}: {ppl}")
         except Exception as e:
             print(f"Error evaluating {dataset}: {e}")
 
@@ -257,7 +256,6 @@ def measure_inference_time(model, nsamples, seed, seqlen, tokenizer):
         model(inp)
     inference_time = (time.time() - start_time) / nsamples
 
-    print(f"Average Inference Time: {inference_time:.4f} seconds")
     return inference_time
 
 
@@ -285,7 +283,7 @@ def generate_text(model, tokenizer, prompt, max_length=100):
     )
     generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
 
-    return generated_text[:80]
+    return generated_text
 
 
 PROMPT = """

@@ -101,7 +101,6 @@ def wanda_pruning(modelConfig, dataloader, device=torch.device("cuda:0")):
     use_cache = model.config.use_cache
     model.config.use_cache = False
 
-    print("Loading calibration data")
     #dataloader, _ = get_c4(
     #    nsamples=modelConfig.nsamples,
     #    seed=modelConfig.seed,
