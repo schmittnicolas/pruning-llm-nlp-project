@@ -231,7 +231,7 @@ def evaluate_model_perplexity(
 
 
 def get_memory_usage(model, ratio):
-    non_zero_params = sum((p != 0).sum().item() for p in model.parameters())
+    non_zero_params = sum((p != 0).sum().item() for p in model.parameters() if not p.is_meta)
 
     memory_usage = non_zero_params * 4  # memory in bytes
 
@@ -285,7 +285,7 @@ def generate_text(model, tokenizer, prompt, max_length=100):
     )
     generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
 
-    return generated_text[:50]
+    return generated_text[:80]
 
 
 PROMPT = """
