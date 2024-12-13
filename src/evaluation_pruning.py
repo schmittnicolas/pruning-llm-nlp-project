@@ -386,14 +386,14 @@ def global_evaluation(
     # Inference time evaluation
     # There is no point of caculating the inference time for a unstructured model as it does not reduce the model size
     inference_time = 0
-    if is_structured:
-        inference_time = measure_inference_time(
-            modelConfig.model,
-            modelConfig.nsamples,
-            modelConfig.seed,
-            modelConfig.seqlen,
-            modelConfig.tokenizer,
-        )
+    # if is_structured:
+    #     inference_time = measure_inference_time(
+    #         modelConfig.model,
+    #         modelConfig.nsamples,
+    #         modelConfig.seed,
+    #         modelConfig.seqlen,
+    #         modelConfig.tokenizer,
+    #     )
 
     # Perplexity evaluation
     datasets = ["wikitext2"]
