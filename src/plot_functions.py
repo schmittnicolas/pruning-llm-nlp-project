@@ -96,3 +96,45 @@ def plot_metrics_horizontal(ratios, perplexity, model_size):
     # Show the plots
     plt.tight_layout()
     plt.show()
+
+
+###############################################################################################
+# STRUCURED PRUNING PLOT                                                                      #
+###############################################################################################
+
+def plot_structured_evaluation_metrics(ratios, metrics):
+    """
+    Create a multi-plot visualization of key metrics.
+    
+    Args:
+        ratios (list): Pruning ratios
+        metrics (dict): Dictionary of metrics to plot
+    """
+    # Prepare figure
+    fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+    fig.suptitle('Model Metrics Across Pruning Ratios', fontsize=16)
+    
+    # Metrics to plot
+    plot_configs = [
+        ('Model Size (MB)', 'blue', 'o'),
+        ('Perplexity', 'green', '^'),
+        ('Inference Time (s)', 'red', 's'),
+        ('CO2 Emissions (g)', 'purple', 'D')
+    ]
+    
+    # Flatten axes for easier iteration
+    axes_flat = axes.flatten()
+    
+    # Plot each metric
+    for (metric, color, marker), ax in zip(plot_configs, axes_flat):
+        ax.plot([r*100 for r in ratios], metrics[metric], 
+                color=color, marker=marker, linestyle='-')
+        ax.set_title(metric)
+        ax.set_xlabel('Pruning Ratio (%)')
+        ax.set_ylabel(metric)
+        ax.grid(True, linestyle='--', alpha=0.7)
+    
+    plt.tight_layout()
+    plt.show()
+
+# display_structured_results(results, ratios)
