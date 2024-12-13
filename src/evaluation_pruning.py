@@ -166,7 +166,7 @@ def measure_inference_time(model, nsamples, seed, seqlen, tokenizer):
 #                                      PROMPT ANSWER EVALUATION                                 #
 #################################################################################################
 
-def generate_text(model, tokenizer, prompt, max_length=55):
+def generate_text(model, tokenizer, prompt, max_length=100):
     """
     Generate text using the pruned model
     
@@ -184,7 +184,7 @@ def generate_text(model, tokenizer, prompt, max_length=55):
     output = model.generate(input_ids, max_length=max_length, num_return_sequences=1, no_repeat_ngram_size=2)
     generated_text = tokenizer.decode(output[0], skip_special_tokens=True)
 
-    return generated_text
+    return generated_text[:50]
 
 PROMPT = """
     A young girl named Lila discovers an ancient book in the attic of her family home. 
